@@ -88,16 +88,24 @@ namespace HRIS.API.Controllers
 
 
         [HttpPut]
-        [Route("update/{id}")]
-        public void Put(int id, [FromBody] string value)
+        [Route("update/{empid}")]
+        public void Put(int id, [FromBody] string empid)
         {
         }
 
         // DELETE api/<EmployeesController>/5
         [HttpDelete]
-        [Route("delete/{id}")]
-        public void Delete(int id)
+        [Route("softdelete")]
+        public async Task<ActionResult> Delete(Employee _employee)
         {
+            var model = new Employee
+            {
+                EmpID = _employee.EmpID,
+            };
+
+            var _result = await Mediator.Send(new DeleteEmployee { employee = model });
+
+            return Ok(new { status = 200, message = "Deleted Created." });
         }
     }
 }

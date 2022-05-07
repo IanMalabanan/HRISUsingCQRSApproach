@@ -109,13 +109,6 @@ namespace HRIS.Infrastructure
         {
             await _dbContext.Set<T>().AddAsync(entity);
 
-            //if (entity.GetType().IsSubclassOf(typeof(AuditableEntity)))
-            //{
-            //    var _auditableEntity = entity as AuditableEntity;
-            //    _auditableEntity.CreatedDate = _dateTime.Now;
-            //    _auditableEntity.CreatedBy = _currentUserService.UserId;
-            //}
-
             UpdateAuditEntities();
             await _dbContext.SaveChangesAsync(cancellationToken);
             return entity;
@@ -138,31 +131,12 @@ namespace HRIS.Infrastructure
                     entity.CreatedBy = "";//_currentUserService.UserId;
 
                 }
-
             }
         }
 
         public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken)
         {
-
-            
-            ///
-
-            //_dbContext.Set<T>().Update(entity);
-
-
-
             _dbContext.Entry(entity).State = EntityState.Modified;
-
-            //if (entity.GetType().IsSubclassOf(typeof(AuditableEntity)))
-            //{
-            //    var _auditableEntity = entity as AuditableEntity;
-            //    _auditableEntity.LastModifiedDate = _dateTime.Now;
-            //    _auditableEntity.LastModifiedBy = _currentUserService.UserId;
-            //}
-
-
-            //UpdateAuditEntities();
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 

@@ -3,6 +3,7 @@ using HRIS.Application.Common.Interfaces.Repositories;
 using HRIS.Domain.Entities;
 using HRIS.Domain.Enums;
 using HRIS.Domain.ViewModels;
+using HRIS.Infrastructure.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -24,10 +25,10 @@ namespace HRIS.Infrastructure.Repositories
         public async Task<IEnumerable<EmployeeModel>> GetEmployees()
         {
             var data = await (from emp in _dbContext.Employees
-                              join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
-                              join sec in _dbContext.DepartmentSections
-                              on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
-                              equals new { A = sec.DepartmentCode, B = sec.Code }
+                              //join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
+                              //join sec in _dbContext.DepartmentSections
+                              //on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
+                              //equals new { A = sec.DepartmentCode, B = sec.Code }
                               select new
                               {
                                   emp.BatchNo,
@@ -36,10 +37,10 @@ namespace HRIS.Infrastructure.Repositories
                                   emp.LastName,
                                   emp.FirstName,
                                   emp.MiddleName,
-                                  DepartmentCode = dep.Code,
-                                  DepartmentName = dep.Description,
-                                  SectionCode = sec.Code,
-                                  SectionName = sec.Description
+                                  //DepartmentCode = dep.Code,
+                                  //DepartmentName = dep.Description,
+                                  //SectionCode = sec.Code,
+                                  //SectionName = sec.Description
                               }
                        ).Distinct().ToListAsync();
 
@@ -51,25 +52,25 @@ namespace HRIS.Infrastructure.Repositories
                 LastName = x.LastName,
                 FirstName = x.FirstName,
                 MiddleName = x.MiddleName,
-                DepartmentDetails = new DepartmentModel
-                {
-                    Code = x.DepartmentCode,
-                    Description = x.DepartmentName
-                },
-                DepartmentSectionDetails = new DepartmentSectionModel
-                {
-                    Code = x.SectionCode,
-                    Description = x.SectionName,
-                    DepartmentCode = x.DepartmentCode
-                }
+                //DepartmentDetails = new DepartmentModel
+                //{
+                //    Code = x.DepartmentCode,
+                //    Description = x.DepartmentName
+                //},
+                //DepartmentSectionDetails = new DepartmentSectionModel
+                //{
+                //    Code = x.SectionCode,
+                //    Description = x.SectionName,
+                //    DepartmentCode = x.DepartmentCode
+                //}
             });
 
             return _result;
         }
 
-        public Task Validate(Employee entity, CRUDType cRUDType)
+        public async Task Validate(Employee entity, CRUDType cRUDType)
         {
-            throw new NotImplementedException();
+            entity.ValidateExists(_dbContext.Employees, cRUDType);
         }
 
         public override async Task<Employee> AddAsync(Employee entity)

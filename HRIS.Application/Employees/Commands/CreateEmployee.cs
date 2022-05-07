@@ -33,9 +33,11 @@ namespace HRIS.Application.Employees.Commands
         public async Task<Employee> Handle(CreateEmployee request, CancellationToken cancellationToken)
         {
             var _entity = _mapper.Map<Employee>(request.model);
+            
             _entity.ValidateRequired();
 
-            //await _roleRepository.Validate(_entity, Domain.Enums.CRUDType.CREATE);
+            await _employeeRepository.Validate(_entity, Domain.Enums.CRUDType.CREATE);
+            
             var _result = await _employeeRepository.AddAsync(_entity);
 
             return _result;
