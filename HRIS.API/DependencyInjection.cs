@@ -1,12 +1,4 @@
-﻿//using Cti.Payment.AdminUI.Interfaces;
-using Cti.Payment.AdminUI.Services;
-//using Cti.Payment.AdminUI.Services.Config;
-//using Cti.Payment.Application.Common.Interfaces;
-//using Cti.Payment.Application.Common.Interfaces.Repositories;
-//using Cti.Payment.Application.Common.Models;
-//using Cti.Payment.Infra.Persistence.Repository;
-//using Cti.Payment.Infra.Services;
-using HRIS.Infrastructure.Services;
+﻿using HRIS.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
