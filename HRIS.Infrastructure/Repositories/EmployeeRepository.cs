@@ -1,4 +1,7 @@
-﻿using HRIS.Application.Common.Interfaces.Repositories;
+﻿using HRIS.Application.Common.Interfaces.Application;
+using HRIS.Application.Common.Interfaces.Repositories;
+using HRIS.Domain.Entities;
+using HRIS.Domain.Enums;
 using HRIS.Domain.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -9,11 +12,11 @@ using System.Threading.Tasks;
 
 namespace HRIS.Infrastructure.Repositories
 {
-    public class EmployeeRepository : EmployeeModel, IEmployeeRepository
+    public class EmployeeRepository : GenericRepositoryAsync<Employee>, IEmployeeRepository
     {
         private readonly ApplicationDBContext _dbContext;
 
-        public EmployeeRepository(ApplicationDBContext dbContext)
+        public EmployeeRepository(ApplicationDBContext dbContext, IDateTime dateTimeService) : base(dbContext,dateTimeService)
         {
             _dbContext = dbContext;
         }
@@ -27,12 +30,12 @@ namespace HRIS.Infrastructure.Repositories
                               equals new { A = sec.DepartmentCode, B = sec.Code }
                               select new
                               {
-                                  BatchNo,
-                                  SerialID,
-                                  EmpID,
-                                  LastName,
-                                  FirstName,
-                                  MiddleName,
+                                  emp.BatchNo,
+                                  emp.SerialID,
+                                  emp.EmpID,
+                                  emp.LastName,
+                                  emp.FirstName,
+                                  emp.MiddleName,
                                   DepartmentCode = dep.Code,
                                   DepartmentName = dep.Description,
                                   SectionCode = sec.Code,
@@ -63,5 +66,29 @@ namespace HRIS.Infrastructure.Repositories
 
             return _result;
         }
+
+        public Task Validate(Employee entity, CRUDType cRUDType)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override async Task<Employee> AddAsync(Employee entity)
+        {
+            try
+            {
+                var _result = await base.AddAsync(entity);
+                return _result;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        public override async Task UpdateAsync(Employee entity)
+        {
+            await base.UpdateAsync(entity);
+        }
+
     }
 }

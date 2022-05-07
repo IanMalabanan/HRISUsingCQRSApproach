@@ -1,4 +1,6 @@
-﻿using HRIS.Domain.ViewModels;
+﻿using HRIS.Domain.Entities;
+using HRIS.Domain.Enums;
+using HRIS.Domain.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +9,9 @@ using System.Threading.Tasks;
 
 namespace HRIS.Application.Common.Interfaces.Repositories
 {
-    public interface IEmployeeRepository
+    public interface IEmployeeRepository : IGenericRepositoryAsync<Employee>
     {
         Task<IEnumerable<EmployeeModel>> GetEmployees();
+        Task Validate(Employee entity, CRUDType cRUDType);
     }
 }

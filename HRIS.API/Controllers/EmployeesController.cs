@@ -1,5 +1,9 @@
-﻿using HRIS.Application.Employees.Queries;
+﻿using HRIS.Application.Common.Exceptions;
+using HRIS.Application.Employees.Commands;
+using HRIS.Application.Employees.Queries;
 using HRIS.Domain.Entities;
+using HRIS.Domain.Exceptions;
+using HRIS.Domain.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -16,7 +20,6 @@ namespace HRIS.API.Controllers
     public class EmployeesController : ApiControllerBase
     {
 
-        // GET: api/<EmployeesController>
         [HttpGet]
         [Route("getallemployees")]
         public async Task<ActionResult<IEnumerable<Employee>>> GetEmployees()
@@ -33,27 +36,66 @@ namespace HRIS.API.Controllers
             }
         }
 
-        // GET api/<EmployeesController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("employee/{id}")]
+        public string GetByID(int id)
         {
             return "value";
         }
 
-        // POST api/<EmployeesController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        [Route("create")]
+        public async Task<ActionResult> CreateEmployee(Employee req)
         {
+            try
+            {
+                var model = new Employee
+                {
+                    BatchNo = req.BatchNo,
+                    SerialID = req.SerialID,
+                    EmpID = req.EmpID,
+                    LastName = req.LastName,
+                    FirstName = req.FirstName,
+                    MiddleName = req.MiddleName,
+                    DepartmentCode = req.DepartmentCode,
+                    DepartmentSectionCode = req.DepartmentSectionCode,
+                    CivilStatusCode = req.CivilStatusCode
+                };
+
+                var _result = await Mediator.Send(new CreateEmployee { model = model });
+
+                return Ok(new { status = 200, message = "Employee Created." });
+
+            }
+            catch (UnsatisfiedRequiredFieldsException ex)
+            {
+                //Logger.Error($"{DateTime.Now} : {ex.Message}");
+                //Logger.Error($"{DateTime.Now} : {ex.StackTrace}");
+                return BadRequest(new { status = 400, message = ex.Message });
+            }
+            catch (NotFoundException ex)
+            {
+                //Logger.Error($"{DateTime.Now} : {ex.Message}");
+                //Logger.Error($"{DateTime.Now} : {ex.StackTrace}");
+                return NotFound(new { status = 404, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                //Logger.Error($"{DateTime.Now} : {ex.Message}");
+                //Logger.Error($"{DateTime.Now} : {ex.StackTrace}");
+                return StatusCode(500, new { status = 500, message = ex.Message });
+            }
         }
 
-        // PUT api/<EmployeesController>/5
-        [HttpPut("{id}")]
+
+        [HttpPut]
+        [Route("update/{id}")]
         public void Put(int id, [FromBody] string value)
         {
         }
 
         // DELETE api/<EmployeesController>/5
-        [HttpDelete("{id}")]
+        [HttpDelete]
+        [Route("delete/{id}")]
         public void Delete(int id)
         {
         }

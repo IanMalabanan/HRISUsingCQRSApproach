@@ -20,6 +20,8 @@
 
   <ItemGroup>
     <Folder Include="AuditTrail\Queries\" />
+    <Folder Include="DepartmentSection\Commands\" />
+    <Folder Include="DepartmentSection\Queries\" />
   </ItemGroup>
 
 </Project>

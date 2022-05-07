@@ -71,7 +71,7 @@ namespace HRIS.Infrastructure
 
             //Repositories
             services.AddScoped<IEmployeeRepository,EmployeeRepository>();
-
+            services.AddScoped<IAuditTrailsRepository, AuditTrailsRepository>();
 
 
 
