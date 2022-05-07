@@ -34,7 +34,5 @@ namespace HRIS.Application.Employees.Queries
             return _result;
 
         }
-
-
     }
 }

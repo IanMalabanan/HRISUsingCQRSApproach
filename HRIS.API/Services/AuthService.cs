@@ -1,8 +1,4 @@
-﻿//using Cti.Payment.AdminUI.Interfaces;
-//using Cti.Payment.AdminUI.Shared;
-//using Cti.Payment.Application.Common.Models;
-//using Cti.Payment.Domain.Entities;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using System;
 using System.Collections.Generic;

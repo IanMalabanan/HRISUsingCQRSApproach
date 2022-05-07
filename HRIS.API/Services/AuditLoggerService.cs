@@ -16,7 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Cti.Payment.AdminUI.Services
+namespace HRIS.API.Services
 {
     public class AuditLoggerService : IAuditLoggerService
     {

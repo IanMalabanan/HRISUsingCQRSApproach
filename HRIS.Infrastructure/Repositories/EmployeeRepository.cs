@@ -17,7 +17,7 @@ namespace HRIS.Infrastructure.Repositories
     {
         private readonly ApplicationDBContext _dbContext;
 
-        public EmployeeRepository(ApplicationDBContext dbContext, IDateTime dateTimeService) : base(dbContext,dateTimeService)
+        public EmployeeRepository(ApplicationDBContext dbContext, IDateTime dateTimeService) : base(dbContext, dateTimeService)
         {
             _dbContext = dbContext;
         }
@@ -25,10 +25,10 @@ namespace HRIS.Infrastructure.Repositories
         public async Task<IEnumerable<EmployeeModel>> GetEmployees()
         {
             var data = await (from emp in _dbContext.Employees
-                              //join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
-                              //join sec in _dbContext.DepartmentSections
-                              //on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
-                              //equals new { A = sec.DepartmentCode, B = sec.Code }
+                                  //join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
+                                  //join sec in _dbContext.DepartmentSections
+                                  //on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
+                                  //equals new { A = sec.DepartmentCode, B = sec.Code }
                               select new
                               {
                                   emp.BatchNo,
@@ -68,6 +68,53 @@ namespace HRIS.Infrastructure.Repositories
             return _result;
         }
 
+        public async Task<EmployeeModel> GetEmployeeByID(string empid)
+        {
+            var data = (from emp in _dbContext.Employees
+                            //join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
+                            //join sec in _dbContext.DepartmentSections
+                            //on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
+                            //equals new { A = sec.DepartmentCode, B = sec.Code }
+                        select new
+                        {
+                            emp.BatchNo,
+                            emp.SerialID,
+                            emp.EmpID,
+                            emp.LastName,
+                            emp.FirstName,
+                            emp.MiddleName,
+                            //DepartmentCode = dep.Code,
+                            //DepartmentName = dep.Description,
+                            //SectionCode = sec.Code,
+                            //SectionName = sec.Description
+                        }
+                       ).Where(x => x.EmpID == empid).FirstOrDefault();
+
+
+            var _result = new EmployeeModel
+            {
+                BatchNo = data.BatchNo,
+                SerialID = data.SerialID,
+                EmpID = data.EmpID,
+                LastName = data.LastName,
+                FirstName = data.FirstName,
+                MiddleName = data.MiddleName,
+                //DepartmentDetails = new DepartmentModel
+                //{
+                //    Code = x.DepartmentCode,
+                //    Description = x.DepartmentName
+                //},
+                //DepartmentSectionDetails = new DepartmentSectionModel
+                //{
+                //    Code = x.SectionCode,
+                //    Description = x.SectionName,
+                //    DepartmentCode = x.DepartmentCode
+                //}
+            };
+
+            return await Task.FromResult(_result);
+        }
+
         public async Task Validate(Employee entity, CRUDType cRUDType)
         {
             entity.ValidateExists(_dbContext.Employees, cRUDType);
@@ -91,5 +138,11 @@ namespace HRIS.Infrastructure.Repositories
             await base.UpdateAsync(entity);
         }
 
+        public async Task<Employee> GetEmployeeByEmpID(string empid)
+        {
+            var _result = await _dbContext.Employees.Where(w => w.EmpID == empid).FirstOrDefaultAsync();
+
+            return _result;
+        }
     }
 }

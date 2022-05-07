@@ -12,6 +12,8 @@ namespace HRIS.Application.Common.Interfaces.Repositories
     public interface IEmployeeRepository : IGenericRepositoryAsync<Employee>
     {
         Task<IEnumerable<EmployeeModel>> GetEmployees();
+        Task<EmployeeModel> GetEmployeeByID(string empid);
+        Task<Employee> GetEmployeeByEmpID(string empid);
         Task Validate(Employee entity, CRUDType cRUDType);
     }
 }
