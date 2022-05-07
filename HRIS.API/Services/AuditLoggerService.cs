@@ -1,4 +1,5 @@
 ﻿//using Blazored.SessionStorage;
+using HRIS.Application.AuditTrailFunction.Command;
 using HRIS.Application.Common.Interfaces;
 using HRIS.Application.Common.Interfaces.Application;
 using HRIS.Domain.Entities;
@@ -30,13 +31,15 @@ namespace Cti.Payment.AdminUI.Services
         private readonly ISender _mediator;
         private AuthenticationState _authState;
         private readonly ILogger _logger;
-        public AuditLoggerService(AuthenticationStateProvider authStateProvider, IDateTime dateTime, ISender mediator, ILocationService locationService, ISessionStorageService sessionStorageService, ILogger logger)
+        public AuditLoggerService(AuthenticationStateProvider authStateProvider, IDateTime dateTime, ISender mediator, ILocationService locationService
+            //, ISessionStorageService sessionStorageService
+            , ILogger logger)
         {
             _authStateProvider = authStateProvider;
             _dateTime = dateTime;
             _mediator = mediator;
             _locationService = locationService;
-            _sessionStorageService = sessionStorageService;
+            //_sessionStorageService = sessionStorageService;
             _logger = logger;
         }
 

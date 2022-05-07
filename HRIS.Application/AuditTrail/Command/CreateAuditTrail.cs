@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using HRIS.Application.Common.Interfaces.Application;
 using HRIS.Domain.Entities;
 using HRIS.Domain.ViewModels;
 using MediatR;
