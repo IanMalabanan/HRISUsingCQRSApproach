@@ -38,11 +38,11 @@ namespace HRIS.Infrastructure
 
         public DbSet<CivilStatus> CivilStats { get; set; }
 
-        public DbSet<Departments> Departments { get; set; }
+        public DbSet<Department> Departments { get; set; }
 
         public DbSet<DepartmentSection> DepartmentSections { get; set; }
 
-        public DbSet<AuditTrailLogs> AuditTrails { get; set; }
+        public DbSet<AuditTrailLog> AuditTrails { get; set; }
 
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())

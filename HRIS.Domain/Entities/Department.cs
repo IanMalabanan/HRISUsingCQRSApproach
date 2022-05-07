@@ -11,7 +11,7 @@ namespace HRIS.Domain.Entities
 {
     [Table("t_Department", Schema = "dbo")]
 
-    public class Departments : SoftDeletableEntity
+    public class Department : SoftDeletableEntity
     {
         [Key]
         [Column("Code", TypeName = "nvarchar(5)")]

@@ -32,17 +32,12 @@ namespace HRIS.Domain.Entities
         [Column("MiddleName")]
         public string MiddleName { get; set; }
 
-        [Column("DepartmentCode", TypeName = "nvarchar(5)")]
-        [MaxLength(5)]
-        public string DepartmentCode { get; set; }
+        public virtual Department Department { get; set; }
 
         [Column("DepartmentSectionCode", TypeName = "nvarchar(5)")]
-        [MaxLength(5)]
         public string DepartmentSectionCode { get; set; }
 
-        [Column("CivilStatusCode", TypeName = "nvarchar(1)")]
-        [MaxLength(1)]
-        public string CivilStatusCode { get; set; }
+        public virtual CivilStatus CivilStatus { get; set; }
 
     }
 }

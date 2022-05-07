@@ -14,7 +14,7 @@ namespace HRIS.Domain.Entities
     public class CivilStatus : SoftDeletableEntity
     {
         [Key]
-        [Column("Code", TypeName = "nvarchar(1)")]
+        [Column("Code", TypeName = "nvarchar(5)")]
         [MaxLength(1)]
         public string Code { get; set; }
 

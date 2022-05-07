@@ -11,12 +11,12 @@ using System.Threading.Tasks;
 
 namespace HRIS.Application.AuditTrailFunction.Command
 {
-    public class CreateAuditTrail : IRequest<AuditTrailLogs>
+    public class CreateAuditTrail : IRequest<AuditTrailLog>
     {
         public AuditLogsModel Log { get; set; }
     }
 
-    public class CreateAuditTrailHandler : IRequestHandler<CreateAuditTrail, AuditTrailLogs>
+    public class CreateAuditTrailHandler : IRequestHandler<CreateAuditTrail, AuditTrailLog>
     {
         private readonly IAuditTrailsRepository _auditTrailsRepository;
         private readonly IMapper _mapper;
@@ -28,10 +28,10 @@ namespace HRIS.Application.AuditTrailFunction.Command
             _mapper = mapper;
         }
 
-        public async Task<AuditTrailLogs> Handle(CreateAuditTrail request, CancellationToken cancellationToken)
+        public async Task<AuditTrailLog> Handle(CreateAuditTrail request, CancellationToken cancellationToken)
         {
 
-            var _entity = _mapper.Map<AuditTrailLogs>(request.Log);
+            var _entity = _mapper.Map<AuditTrailLog>(request.Log);
 
             var _result = await _auditTrailsRepository.AddAsync(_entity);
 

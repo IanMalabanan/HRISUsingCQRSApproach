@@ -9,7 +9,7 @@ namespace HRIS.Domain.Entities
 {
     [Table("t_AuditTrails", Schema = "dbo")]
 
-    public class AuditTrailLogs : SoftDeletableEntity
+    public class AuditTrailLog : SoftDeletableEntity
     {
         [Key]
         public int Id { get; set; }

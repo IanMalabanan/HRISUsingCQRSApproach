@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HRIS.Application.Employees.Commands
+namespace HRIS.Application.EmployeesCQRS.Commands
 {
     public class UpdateEmployee : IRequest<Employee>
     {
@@ -41,9 +41,9 @@ namespace HRIS.Application.Employees.Commands
             _entity.FirstName = request.model.FirstName;
             _entity.MiddleName = request.model.MiddleName;
             _entity.LastName = request.model.LastName;
-            _entity.DepartmentCode = request.model.DepartmentCode;
-            _entity.DepartmentSectionCode = request.model.DepartmentSectionCode;
-            _entity.CivilStatusCode = request.model.CivilStatusCode;
+            //_entity.DepartmentCode = request.model.DepartmentCode;
+            //_entity.DepartmentSectionCode = request.model.DepartmentSectionCode;
+            //_entity.CivilStatusCode = request.model.CivilStatusCode;
 
             _entity.ValidateRequired();
 

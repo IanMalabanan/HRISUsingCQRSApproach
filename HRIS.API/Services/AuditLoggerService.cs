@@ -43,7 +43,7 @@ namespace HRIS.API.Services
             _logger = logger;
         }
 
-        public async Task<AuditTrailLogs> AddAuditLogAsync(string remarks, string PageAccess)
+        public async Task<AuditTrailLog> AddAuditLogAsync(string remarks, string PageAccess)
         {
             var place = string.Empty;
             var ip = string.Empty;

@@ -9,6 +9,6 @@ namespace HRIS.Application.Common.Interfaces.Application
 {
     public interface IAuditLoggerService
     {
-        Task<AuditTrailLogs> AddAuditLogAsync(string remarks, string PageAccess);
+        Task<AuditTrailLog> AddAuditLogAsync(string remarks, string PageAccess);
     }
 }

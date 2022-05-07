@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HRIS.Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20220507004727_AuditTrail")]
-    partial class AuditTrail
+    [Migration("20220507104925_InitialDB")]
+    partial class InitialDB
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -21,7 +21,7 @@ namespace HRIS.Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "5.0.16")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("HRIS.Domain.Entities.AuditTrails", b =>
+            modelBuilder.Entity("HRIS.Domain.Entities.AuditTrailLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -109,6 +109,42 @@ namespace HRIS.Infrastructure.Migrations
                     b.ToTable("t_CivilStatus", "dbo");
                 });
 
+            modelBuilder.Entity("HRIS.Domain.Entities.Department", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasColumnType("nvarchar(5)")
+                        .HasColumnName("Code");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Description");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("t_Department", "dbo");
+                });
+
             modelBuilder.Entity("HRIS.Domain.Entities.DepartmentSection", b =>
                 {
                     b.Property<string>("Code")
@@ -149,42 +185,6 @@ namespace HRIS.Infrastructure.Migrations
                     b.ToTable("t_DepartmentalSection", "dbo");
                 });
 
-            modelBuilder.Entity("HRIS.Domain.Entities.Departments", b =>
-                {
-                    b.Property<string>("Code")
-                        .HasColumnType("nvarchar(5)")
-                        .HasColumnName("Code");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("Description");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("LastModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Code");
-
-                    b.ToTable("t_Department", "dbo");
-                });
-
             modelBuilder.Entity("HRIS.Domain.Entities.Employee", b =>
                 {
                     b.Property<string>("EmpID")
@@ -196,9 +196,7 @@ namespace HRIS.Infrastructure.Migrations
                         .HasColumnName("BatchNo");
 
                     b.Property<string>("CivilStatusCode")
-                        .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)")
-                        .HasColumnName("CivilStatusCode");
+                        .HasColumnType("nvarchar(1)");
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -213,12 +211,9 @@ namespace HRIS.Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("DepartmentCode")
-                        .HasMaxLength(5)
-                        .HasColumnType("nvarchar(5)")
-                        .HasColumnName("DepartmentCode");
+                        .HasColumnType("nvarchar(5)");
 
                     b.Property<string>("DepartmentSectionCode")
-                        .HasMaxLength(5)
                         .HasColumnType("nvarchar(5)")
                         .HasColumnName("DepartmentSectionCode");
 
@@ -249,7 +244,26 @@ namespace HRIS.Infrastructure.Migrations
 
                     b.HasKey("EmpID");
 
+                    b.HasIndex("CivilStatusCode");
+
+                    b.HasIndex("DepartmentCode");
+
                     b.ToTable("t_Employees", "dbo");
+                });
+
+            modelBuilder.Entity("HRIS.Domain.Entities.Employee", b =>
+                {
+                    b.HasOne("HRIS.Domain.Entities.CivilStatus", "CivilStatus")
+                        .WithMany()
+                        .HasForeignKey("CivilStatusCode");
+
+                    b.HasOne("HRIS.Domain.Entities.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentCode");
+
+                    b.Navigation("CivilStatus");
+
+                    b.Navigation("Department");
                 });
 #pragma warning restore 612, 618
         }

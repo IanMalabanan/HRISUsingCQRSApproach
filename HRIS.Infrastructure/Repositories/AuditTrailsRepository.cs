@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace HRIS.Infrastructure.Repositories
 {
-    public class AuditTrailsRepository : GenericRepositoryAsync<AuditTrailLogs>, IAuditTrailsRepository
+    public class AuditTrailsRepository : GenericRepositoryAsync<AuditTrailLog>, IAuditTrailsRepository
     {
         private readonly ApplicationDBContext _dbContext;
         //private readonly ICurrentUserService _currentUserService;
@@ -26,11 +26,11 @@ namespace HRIS.Infrastructure.Repositories
 
         }
 
-        public override async Task<AuditTrailLogs> AddAsync(AuditTrailLogs entity)
+        public override async Task<AuditTrailLog> AddAsync(AuditTrailLog entity)
         {
             foreach(EntityEntry entry in _dbContext.ChangeTracker.Entries())
             {
-                if(entry.Entity.GetType() != typeof(AuditTrailLogs))
+                if(entry.Entity.GetType() != typeof(AuditTrailLog))
                 {
                     entry.State = Microsoft.EntityFrameworkCore.EntityState.Detached;
                 }

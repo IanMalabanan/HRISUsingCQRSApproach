@@ -1,5 +1,5 @@
 ﻿using HRIS.Application.Common.Exceptions;
-using HRIS.Application.Employees.Commands;
+using HRIS.Application.EmployeesCQRS.Commands;
 using HRIS.Application.Employees.Queries;
 using HRIS.Domain.Entities;
 using HRIS.Domain.Exceptions;
@@ -86,9 +86,9 @@ namespace HRIS.API.Controllers
                     LastName = req.LastName,
                     FirstName = req.FirstName,
                     MiddleName = req.MiddleName,
-                    DepartmentCode = req.DepartmentCode,
-                    DepartmentSectionCode = req.DepartmentSectionCode,
-                    CivilStatusCode = req.CivilStatusCode
+                    //DepartmentCode = req.DepartmentCode,
+                    //DepartmentSectionCode = req.DepartmentSectionCode,
+                    //CivilStatusCode = req.CivilStatusCode
                 };
 
                 var _result = await Mediator.Send(new CreateEmployee { model = model });
@@ -130,9 +130,9 @@ namespace HRIS.API.Controllers
                     LastName = req.LastName,
                     FirstName = req.FirstName,
                     MiddleName = req.MiddleName,
-                    DepartmentCode = req.DepartmentCode,
-                    DepartmentSectionCode = req.DepartmentSectionCode,
-                    CivilStatusCode = req.CivilStatusCode
+                    //DepartmentCode = req.DepartmentCode,
+                    //DepartmentSectionCode = req.DepartmentSectionCode,
+                    //CivilStatusCode = req.CivilStatusCode
                 };
 
                 var _result = await Mediator.Send(new UpdateEmployee { model = model });

@@ -46,7 +46,7 @@ namespace HRIS.Application.Common.Mappings
         private void ApplyMappings()
         {
             CreateMap<Employee, EmployeeModel>();
-            CreateMap<Departments, DepartmentModel>();
+            CreateMap<Domain.Entities.Department, DepartmentModel>();
             CreateMap<DepartmentSection, DepartmentSectionModel>();
             CreateMap<CivilStatus, CivilStatusModel>();
         }

@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HRIS.Application.Employees.Commands
+namespace HRIS.Application.EmployeesCQRS.Commands
 {
     public class CreateEmployee : IRequest<Employee>
     {

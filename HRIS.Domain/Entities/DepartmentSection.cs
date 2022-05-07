@@ -23,5 +23,6 @@ namespace HRIS.Domain.Entities
 
         [Column("Description")]
         public string Description { get; set; }
+
     }
 }
