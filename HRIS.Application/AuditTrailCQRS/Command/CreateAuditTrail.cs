@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HRIS.Application.AuditTrailFunction.Command
+namespace HRIS.Application.AuditTrailCQRS.Command
 {
     public class CreateAuditTrail : IRequest<AuditTrailLog>
     {

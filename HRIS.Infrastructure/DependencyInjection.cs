@@ -43,8 +43,6 @@ namespace HRIS.Infrastructure
 
             //Services
 
-            //services.AddTransient<IIdentityService, IdentityService>();
-            //services.AddTransient<IDateTime, DateTimeService>();
             services.AddScoped<IDomainEventService, DomainEventService>();
             services.AddTransient<IKeyGenerator, MongoKeyGenerator>();
             services.AddScoped<HttpClient>();
@@ -53,8 +51,6 @@ namespace HRIS.Infrastructure
             services.AddScoped<LocationClientBuilder>();
 
             services.AddScoped<ILocationService, LocationService>();
-
-            //services.AddLogging(); // added for logging
 
             ////Standard services 
             //services.AddScoped<IIdentityService, IdentityService>();
