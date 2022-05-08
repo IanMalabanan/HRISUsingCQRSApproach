@@ -86,9 +86,15 @@ namespace HRIS.API.Controllers
                     LastName = req.LastName,
                     FirstName = req.FirstName,
                     MiddleName = req.MiddleName,
-                    //DepartmentCode = req.DepartmentCode,
-                    //DepartmentSectionCode = req.DepartmentSectionCode,
-                    //CivilStatusCode = req.CivilStatusCode
+                    DepartmentSectionCode = req.DepartmentSectionCode,
+                    Department = new Department
+                    {
+                        Code = req.Department.Code
+                    },
+                    CivilStatus = new CivilStatus
+                    {
+                        Code = req.CivilStatus.Code
+                    }
                 };
 
                 var _result = await Mediator.Send(new CreateEmployee { model = model });
@@ -161,6 +167,15 @@ namespace HRIS.API.Controllers
         }
 
         [HttpDelete]
+        [Route("fulldelete")]
+        public async Task<ActionResult> FullDelete([FromQuery] string empid)
+        {
+            var _result = await Mediator.Send(new FullDeleteEmployee { empid = empid });
+
+            return Ok(new { status = 200, message = "Full Deleted." });
+        }
+
+        [HttpDelete]
         [Route("softdelete")]
         public async Task<ActionResult> Delete(Employee _employee)
         {
@@ -171,7 +186,7 @@ namespace HRIS.API.Controllers
 
             var _result = await Mediator.Send(new DeleteEmployee { employee = model });
 
-            return Ok(new { status = 200, message = "Deleted Created." });
+            return Ok(new { status = 200, message = "Soft Deleted." });
         }
     }
 }

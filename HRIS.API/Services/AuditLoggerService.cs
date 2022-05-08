@@ -1,5 +1,5 @@
 ﻿//using Blazored.SessionStorage;
-using HRIS.Application.AuditTrailFunction.Command;
+using HRIS.Application.AuditTrailCQRS.Command;
 using HRIS.Application.Common.Interfaces;
 using HRIS.Application.Common.Interfaces.Application;
 using HRIS.Domain.Entities;

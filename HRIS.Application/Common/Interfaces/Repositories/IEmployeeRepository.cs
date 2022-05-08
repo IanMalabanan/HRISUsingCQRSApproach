@@ -14,6 +14,7 @@ namespace HRIS.Application.Common.Interfaces.Repositories
         Task<IEnumerable<EmployeeModel>> GetEmployees();
         Task<EmployeeModel> GetEmployeeByID(string empid);
         Task<Employee> GetEmployeeByEmpID(string empid);
+        Task<Employee> FullDeleteEmployee(string empid);
         Task Validate(Employee entity, CRUDType cRUDType);
     }
 }

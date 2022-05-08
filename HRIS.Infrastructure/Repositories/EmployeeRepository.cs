@@ -25,10 +25,13 @@ namespace HRIS.Infrastructure.Repositories
         public async Task<IEnumerable<EmployeeModel>> GetEmployees()
         {
             var data = await (from emp in _dbContext.Employees
-                                  //join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
-                                  //join sec in _dbContext.DepartmentSections
-                                  //on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
-                                  //equals new { A = sec.DepartmentCode, B = sec.Code }
+                              where emp.IsDeleted == false
+                              join dep in _dbContext.Departments on emp.Department.Code equals dep.Code
+                              where dep.IsDeleted == false
+                              join sec in _dbContext.DepartmentSections
+                              on new { A = emp.Department.Code, B = emp.DepartmentSectionCode }
+                              equals new { A = sec.DepartmentCode, B = sec.Code }
+                              where sec.IsDeleted == false
                               select new
                               {
                                   emp.BatchNo,
@@ -37,10 +40,10 @@ namespace HRIS.Infrastructure.Repositories
                                   emp.LastName,
                                   emp.FirstName,
                                   emp.MiddleName,
-                                  //DepartmentCode = dep.Code,
-                                  //DepartmentName = dep.Description,
-                                  //SectionCode = sec.Code,
-                                  //SectionName = sec.Description
+                                  DepartmentCode = dep.Code,
+                                  DepartmentName = dep.Description,
+                                  SectionCode = sec.Code,
+                                  SectionName = sec.Description
                               }
                        ).Distinct().ToListAsync();
 
@@ -52,17 +55,17 @@ namespace HRIS.Infrastructure.Repositories
                 LastName = x.LastName,
                 FirstName = x.FirstName,
                 MiddleName = x.MiddleName,
-                //DepartmentDetails = new DepartmentModel
-                //{
-                //    Code = x.DepartmentCode,
-                //    Description = x.DepartmentName
-                //},
-                //DepartmentSectionDetails = new DepartmentSectionModel
-                //{
-                //    Code = x.SectionCode,
-                //    Description = x.SectionName,
-                //    DepartmentCode = x.DepartmentCode
-                //}
+                DepartmentDetails = new DepartmentModel
+                {
+                    Code = x.DepartmentCode,
+                    Description = x.DepartmentName
+                },
+                DepartmentSectionDetails = new DepartmentSectionModel
+                {
+                    Code = x.SectionCode,
+                    Description = x.SectionName,
+                    DepartmentCode = x.DepartmentCode
+                }
             });
 
             return _result;
@@ -70,11 +73,13 @@ namespace HRIS.Infrastructure.Repositories
 
         public async Task<EmployeeModel> GetEmployeeByID(string empid)
         {
-            var data = (from emp in _dbContext.Employees
-                            //join dep in _dbContext.Departments on emp.DepartmentCode equals dep.Code
-                            //join sec in _dbContext.DepartmentSections
-                            //on new { A = emp.DepartmentCode, B = emp.DepartmentSectionCode }
-                            //equals new { A = sec.DepartmentCode, B = sec.Code }
+            var data = (from emp in _dbContext.Employees where emp.IsDeleted == false
+                        join dep in _dbContext.Departments on emp.Department.Code equals dep.Code
+                        where dep.IsDeleted == false
+                        join sec in _dbContext.DepartmentSections
+                        on new { A = emp.Department.Code, B = emp.DepartmentSectionCode }
+                        equals new { A = sec.DepartmentCode, B = sec.Code }
+                        where sec.IsDeleted == false
                         select new
                         {
                             emp.BatchNo,
@@ -83,10 +88,10 @@ namespace HRIS.Infrastructure.Repositories
                             emp.LastName,
                             emp.FirstName,
                             emp.MiddleName,
-                            //DepartmentCode = dep.Code,
-                            //DepartmentName = dep.Description,
-                            //SectionCode = sec.Code,
-                            //SectionName = sec.Description
+                            DepartmentCode = dep.Code,
+                            DepartmentName = dep.Description,
+                            SectionCode = sec.Code,
+                            SectionName = sec.Description
                         }
                        ).Where(x => x.EmpID == empid).FirstOrDefault();
 
@@ -99,17 +104,17 @@ namespace HRIS.Infrastructure.Repositories
                 LastName = data.LastName,
                 FirstName = data.FirstName,
                 MiddleName = data.MiddleName,
-                //DepartmentDetails = new DepartmentModel
-                //{
-                //    Code = x.DepartmentCode,
-                //    Description = x.DepartmentName
-                //},
-                //DepartmentSectionDetails = new DepartmentSectionModel
-                //{
-                //    Code = x.SectionCode,
-                //    Description = x.SectionName,
-                //    DepartmentCode = x.DepartmentCode
-                //}
+                DepartmentDetails = new DepartmentModel
+                {
+                    Code = data.DepartmentCode,
+                    Description = data.DepartmentName
+                },
+                DepartmentSectionDetails = new DepartmentSectionModel
+                {
+                    Code = data.SectionCode,
+                    Description = data.SectionName,
+                    DepartmentCode = data.DepartmentCode
+                }
             };
 
             return await Task.FromResult(_result);
@@ -140,9 +145,21 @@ namespace HRIS.Infrastructure.Repositories
 
         public async Task<Employee> GetEmployeeByEmpID(string empid)
         {
-            var _result = await _dbContext.Employees.Where(w => w.EmpID == empid).FirstOrDefaultAsync();
+            var _result = await _dbContext.Employees.Where(w => w.EmpID == empid && w.IsDeleted == false).FirstOrDefaultAsync();
 
             return _result;
+        }
+
+        public async Task<Employee> FullDeleteEmployee(string empid)
+        {
+            var data = await _dbContext.Employees.FindAsync(empid);
+
+            _dbContext.Employees.Remove(data);
+            
+            await _dbContext.SaveChangesAsync();
+            
+            return data;
+
         }
     }
 }
