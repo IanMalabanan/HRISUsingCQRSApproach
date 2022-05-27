@@ -47,6 +47,7 @@ namespace HRIS.API.Controllers
             _apiDbContext = apiDbContext;
         }
 
+
         [HttpPost]
         [Route("RegisterUser")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequest user)
@@ -131,7 +132,6 @@ namespace HRIS.API.Controllers
                 });
         }
 
-
         [HttpPost]
         [Route("Login")]
         public async Task<IActionResult> Login([FromQuery] string username, string password)
@@ -212,6 +212,23 @@ namespace HRIS.API.Controllers
                 Success = false
             });
         }
+
+        [HttpGet]
+        [Route("GetUsers")]
+        public async Task<IActionResult> GetUsers()
+        {
+            return Ok(await _userManager.Users.ToListAsync());
+        }
+
+        [HttpGet]
+        [Route("GetUserByUsername")]
+        public async Task<IActionResult> GetUserByUsername([FromQuery] string username)
+        {
+            var user = await _userManager.Users.Where(x => x.UserName == username).FirstOrDefaultAsync();
+
+            return Ok(user);
+        }
+
 
 
 
