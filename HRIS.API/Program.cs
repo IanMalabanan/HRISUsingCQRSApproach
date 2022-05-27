@@ -51,11 +51,6 @@ namespace HRIS.API
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
 
-            //if (isDevelopment)
-            //{
-            //    configurationBuilder.AddUserSecrets<Startup>();
-            //}
-
             var configuration = configurationBuilder.Build();
 
             configurationBuilder.AddCommandLine(args);
@@ -65,12 +60,6 @@ namespace HRIS.API
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            //Host.CreateDefaultBuilder(args)
-            //    .ConfigureWebHostDefaults(webBuilder =>
-            //    {
-            //        webBuilder.UseStartup<Startup>();
-            //    });
-
             Host.CreateDefaultBuilder(args)
                 .ConfigureAppConfiguration((hostContext, configApp) =>
                 {

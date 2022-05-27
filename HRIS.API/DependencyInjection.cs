@@ -17,14 +17,6 @@ namespace HRIS.API
                 c.BaseAddress = new Uri(Configuration["MessagingClientConfig:BaseUrl"]);
             });
 
-            
-            //services.AddScoped<ILocationService, LocationService>();
-            //services.AddScoped<IAuditLoggerService, AuditLoggerService>();
-
-
-            services.Configure<IdentityServerSettings>(
-                Configuration.GetSection("SystemClientConfig:IdentityServerSettings"));
-
             return services;
         }
     }

@@ -53,10 +53,8 @@ namespace HRIS.Infrastructure
             services.AddScoped<ILocationService, LocationService>();
 
             ////Standard services 
-            //services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IDomainEventService, DomainEventService>();
             services.AddScoped<IDateTime, DateTimeService>();
-            //services.AddTransient<IKeyGenerator, MongoKeyGenerator>();
 
             var _messagingConfig = configuration.GetSection(nameof(MessagingClientConfig)).Get<MessagingClientConfig>();
             services.AddSingleton(c => new MessagingClientConfigBuilder(_messagingConfig));
@@ -67,14 +65,6 @@ namespace HRIS.Infrastructure
             services.AddScoped<IEmployeeRepository,EmployeeRepository>();
             services.AddScoped<IAuditTrailsRepository, AuditTrailsRepository>();
 
-
-
-            //Authentication
-            // AddAuthentication(services, _rootConfig);
-
-            //account
-
-            //services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITokenAccessorService, TokenAccessorService>();
             return services;
         }

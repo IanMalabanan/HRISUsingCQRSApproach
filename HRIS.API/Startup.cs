@@ -22,6 +22,11 @@ using HRIS.Application.Common.Interfaces.Application;
 using HRIS.API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using HRIS.API.Model;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using Microsoft.AspNetCore.Identity;
 
 namespace HRIS.API
 {
@@ -44,19 +49,44 @@ namespace HRIS.API
                     , b => b.MigrationsAssembly("HRIS.Infrastructure"));
             });
 
-            services.AddDbContext<ApplicationDbContext>(options =>
+            services.AddDbContext<ApiDbContext>(options =>
             {
                 options.UseSqlServer(Configuration["ConnectionStrings:HRISAPIContextConnection"]
                     , b => b.MigrationsAssembly("HRIS.API"));
-                //options.UseOpenIddict();
             });
+
+            services.Configure<JwtConfig>(Configuration.GetSection("JwtConfig"));
+
+            var key = Encoding.ASCII.GetBytes(Configuration["JwtConfig:Secret"]);
+
+            var tokenValidationParams = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                RequireExpirationTime = false,
+                ClockSkew = TimeSpan.Zero
+            };
+
+            services.AddSingleton(tokenValidationParams);
+
+            services.AddAuthentication(options => {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(jwt => {
+                jwt.SaveToken = true;
+                jwt.TokenValidationParameters = tokenValidationParams;
+            });
+
+            services.AddIdentity<IdentityUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+                        .AddEntityFrameworkStores<ApiDbContext>();
 
             services.AddApplication();
             services.AddInfrastructure(Configuration);
-
-            //services.AddTransient<ICurrentUserService, CurrentUserService>();
-
-
             services.AddMediatR(Assembly.GetExecutingAssembly());
             services.AddMediatR(Assembly.Load("HRIS.Application"));
             services.AddMediatR(Assembly.Load("HRIS.Infrastructure"));
@@ -64,34 +94,19 @@ namespace HRIS.API
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRIS UAT Env", Version = "v1", Description = "Rest APIs for HRIS Sample Project" });
-                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                c.SwaggerDoc("AUTH", new OpenApiInfo { Title = "Identity Server Environment", Version = "v1", Description = "Rest APIs for Identity Server" });
+                c.SwaggerDoc("HRIS", new OpenApiInfo { Title = "HRIS UAT Environment", Version = "v1", Description = "Rest APIs for HRIS Application" });
+                c.AddSecurityDefinition("BearerAuth", new OpenApiSecurityScheme
                 {
-                    Type = SecuritySchemeType.OAuth2,
-                    Flows = new OpenApiOAuthFlows
-                    {
-                        Password = new OpenApiOAuthFlow
-                        {
-                            TokenUrl = new Uri("http://localhost:8722/connect/token")
-                        }
-                    },
-                    Description = "Note: Leave client_id and client_secret blank",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = JwtBearerDefaults.AuthenticationScheme.ToLowerInvariant(),
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    BearerFormat = "JWT",
+                    Description = "JWT Authorization header using the Bearer scheme."
                 });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement
-                {
-                    {
-                          new OpenApiSecurityScheme
-                            {
-                                Reference = new OpenApiReference
-                                {
-                                    Type = ReferenceType.SecurityScheme,
-                                    Id = "oauth2"
-                                }
-                            },
-                            new string[] {}
-                    }
-                });
-                c.OperationFilter<AuthorizeCheckOperationFilter>();
+
+                c.OperationFilter<AuthResponsesOperationFilter>();
             });
         }
 
@@ -102,7 +117,14 @@ namespace HRIS.API
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HRIS.API v1"));
+                app.UseSwaggerUI(c =>
+                {
+                    c.DocumentTitle = "HRIS - Rest API Services";
+                    c.SwaggerEndpoint("/swagger/AUTH/swagger.json", "AUTH");
+                    c.SwaggerEndpoint("/swagger/HRIS/swagger.json", "HRIS");
+                });
+
+                //c.SwaggerEndpoint("/swagger/v1/swagger.json", "HRIS.API v1"));
             }
 
             app.UseHttpsRedirection();
@@ -120,27 +142,44 @@ namespace HRIS.API
         }
     }
 
-    public class AuthorizeCheckOperationFilter : IOperationFilter
+    internal class AuthResponsesOperationFilter : IOperationFilter
     {
         public void Apply(OpenApiOperation operation, OperationFilterContext context)
         {
-            //// Check for authorize attribute
-            var hasAuthorize = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
-                .Union(context.MethodInfo.GetCustomAttributes(true))
-                .OfType<AuthorizeAttribute>()
-                .Any();
+            var attributes = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
+                                .Union(context.MethodInfo.GetCustomAttributes(true));
 
-            if (hasAuthorize)
+            if (attributes.OfType<IAllowAnonymous>().Any())
             {
-                operation.Responses.Add("401", new OpenApiResponse { Description = "Unauthorized" });
-                operation.Responses.Add("403", new OpenApiResponse { Description = "Forbidden" });
+                return;
+            }
+
+            var authAttributes = attributes.OfType<IAuthorizeData>();
+
+            if (authAttributes.Any())
+            {
+                operation.Responses["401"] = new OpenApiResponse { Description = "Unauthorized" };
+
+                if (authAttributes.Any(att => !String.IsNullOrWhiteSpace(att.Roles) || !String.IsNullOrWhiteSpace(att.Policy)))
+                {
+                    operation.Responses["403"] = new OpenApiResponse { Description = "Forbidden" };
+                }
 
                 operation.Security = new List<OpenApiSecurityRequirement>
                 {
                     new OpenApiSecurityRequirement
                     {
-                        [new OpenApiSecurityScheme {Reference = new OpenApiReference {Type = ReferenceType.SecurityScheme, Id = "oauth2"}}]
-                            = new string [] { }
+                        {
+                            new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Id = "BearerAuth",
+                                    Type = ReferenceType.SecurityScheme
+                                }
+                            },
+                            Array.Empty<string>()
+                        }
                     }
                 };
             }

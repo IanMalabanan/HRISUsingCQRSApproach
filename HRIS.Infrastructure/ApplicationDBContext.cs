@@ -18,21 +18,17 @@ namespace HRIS.Infrastructure
 {
     public class ApplicationDBContext : DbContext
     {
-        //private readonly ICurrentUserService _currentUserService;
         private readonly IDateTime _dateTime;
         private readonly IDomainEventService _domainEventService;
 
         public ApplicationDBContext(
             DbContextOptions options,
-            //ICurrentUserService currentUserService,
             IDomainEventService domainEventService,
             IDateTime dateTime) : base(options)
         {
-           // _currentUserService = currentUserService;
             _domainEventService = domainEventService;
             _dateTime = dateTime;
         }
-        //public ApplicationDBContext(DbContextOptions options) : base(options) { }
 
         public DbSet<Employee> Employees { get; set; }
 
@@ -45,45 +41,6 @@ namespace HRIS.Infrastructure
         public DbSet<AuditTrailLog> AuditTrails { get; set; }
 
         public DbSet<User> Users { get; set; }
-
-
-        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
-        {
-            try
-            {
-                var _currentUser = "";//!string.IsNullOrEmpty(_currentUserService.UserId) ? _currentUserService.UserId : "Backend";
-
-
-                foreach (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<AuditableEntity> entry in ChangeTracker.Entries<AuditableEntity>())
-                {
-                    switch (entry.State)
-                    {
-                        case EntityState.Added:
-                            entry.Entity.CreatedBy = "";
-                            entry.Entity.CreatedDate = _dateTime.Now;
-                            break;
-
-                        case EntityState.Modified:
-                            entry.Entity.LastModifiedBy = _currentUser;
-                            entry.Entity.LastModifiedDate = _dateTime.Now;
-                            break;
-                    }
-                }
-
-                var result = await base.SaveChangesAsync(cancellationToken);
-
-                await DispatchEvents();
-
-                return result;
-            }
-            catch (System.Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw ex;
-            }
-
-        }
-
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

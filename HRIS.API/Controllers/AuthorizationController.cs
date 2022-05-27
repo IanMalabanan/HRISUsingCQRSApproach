@@ -4,371 +4,422 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication;
-using AspNet.Security.OpenIdConnect.Extensions;
-using OpenIddict.Core;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
-using OpenIddict.Abstractions;
-using OpenIddict.Server;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using System.Net.Mail;
-using Novell.Directory.Ldap;
-using System.Diagnostics;
-using OpenIddict.Server.AspNetCore;
 using HRIS.API.Model;
-using OpenIddict;
-using AspNet.Security.OpenIdConnect.Primitives;
-using HRIS.API.System;
-using Hcom.Web.Api.Core;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using static HRIS.Application.Common.Security.HashSignature;
+using HRIS.API.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace HRIS.API.Controllers
 {
+    [ApiExplorerSettings(GroupName = "AUTH")]
     [Route("api/[controller]")]
     [ApiController]
     public class AuthorizationController : ControllerBase
     {
-        private readonly IOptions<IdentityOptions> _identityOptions;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly IAccountManager _accountManager;
-        protected readonly ILogger<object> _logger;
-        //protected readonly IUserService _userService;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly JwtConfig _jwtConfig;
+        private readonly TokenValidationParameters _tokenValidationParams;
+        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ILogger<AuthorizationController> _logger;
+        private readonly ApiDbContext _apiDbContext;
+
         public AuthorizationController(
-                IOptions<IdentityOptions> identityOptions,
-                SignInManager<ApplicationUser> signInManager,
-                UserManager<ApplicationUser> userManager,
-                IConfiguration config,
+                UserManager<IdentityUser> userManager,
+                RoleManager<IdentityRole> roleManager,
+                IOptionsMonitor<JwtConfig> optionsMonitor,
+                TokenValidationParameters tokenValidationParams,
                 ILogger<AuthorizationController> logger,
-                IAccountManager accountManager//,
-                //IUserService userService
+                ApiDbContext apiDbContext
                 )
         {
-            _identityOptions = identityOptions;
-            _signInManager = signInManager;
-            _userManager = userManager;
+
             _logger = logger;
-            _accountManager = accountManager;
-            //_userService = userService;
-
+            _roleManager = roleManager;
+            _userManager = userManager;
+            _jwtConfig = optionsMonitor.CurrentValue;
+            _tokenValidationParams = tokenValidationParams;
+            _apiDbContext = apiDbContext;
         }
 
-        [HttpPost("~/connect/token")]
-        [Produces("application/json")]
-        public async Task<IActionResult> Exchange([FromHeader(Name = "loc")] string loc, OpenIdConnectRequest request)
+        [HttpPost]
+        [Route("RegisterUser")]
+        public async Task<IActionResult> Register([FromBody] RegistrationRequest user)
         {
-            var TempPassword = request.Password;
-            var TempUser = request.Username;
-            //try
-            //{
-
-            var curlong = "";
-            var curlat = "";
-            if (loc != null && loc.Split('|').Count() > 1)
+            if (ModelState.IsValid)
             {
-                curlong = loc.Split('|')[0];
-                curlat = loc.Split('|')[1];
-            }
+                // We can utilise the model
+                var existingUser = await _userManager.FindByNameAsync(user.Username);
 
-            _logger.LogInformation(curlong + "," + curlat);
-
-            string userName = request.Username;
-
-            bool isAdUser = request.Username.Contains('\\');
-
-            if (isAdUser) TempUser = request.Username.Split('\\')[1];
-
-
-            if (request.IsPasswordGrantType())
-            {
-
-                var user = await _userManager.FindByEmailAsync(TempUser) ?? await _userManager.FindByNameAsync(TempUser);
-                if (user == null)
+                if (existingUser != null)
                 {
-                    if (isAdUser)
+                    return BadRequest(new TransactionResponse()
                     {
-                        var roleName = "AD";
-                        if ((await _accountManager.GetRoleByNameAsync(roleName)) == null)
-                        {
-                            ApplicationRole applicationRole = new ApplicationRole(roleName, roleName);
-
-                            var result1 = await this._accountManager.CreateRoleAsync(applicationRole, ApplicationPermissions.GetAllPermissionValues());
-
-                            if (!result1.Item1)
-                                throw new Exception($"Error creating role");
-                        }
-
-
-                        var x = await _accountManager.CreateUserAsync(new ApplicationUser()
-                        {
-                            UserName = TempUser,
-                            IsEnabled = true,
-                            Email = TempUser + "@filinvestland.com",
-                        }, new string[] { roleName }, "HcomP@ssw0rd123");
-                        user = await _userManager.FindByEmailAsync(TempUser) ?? await _userManager.FindByNameAsync(TempUser);
-                    }
-                    else
-                    {
-                        //Check HRIS Database
-                        var xx = await _userService.AuthenticateUserAsync(TempUser, TempPassword);
-                        if (xx != null)
-                        {
-
-                            var roleName = "FREBAS_HCOM";
-                            if ((await _accountManager.GetRoleByNameAsync(roleName)) == null)
-                            {
-                                ApplicationRole applicationRole = new ApplicationRole(roleName, roleName);
-
-                                var result1 = await this._accountManager.CreateRoleAsync(applicationRole, new string[] { });
-
-                                if (!result1.Item1)
-                                    throw new Exception($"Error creating role");
-                            }
-
-                            var x = await _accountManager.CreateUserAsync(new ApplicationUser()
-                            {
-                                UserName = TempUser,
-                                IsEnabled = true,
-                                Email = (xx.Email == null) ? TempUser + "@gmail.com" : xx.Email,
-
-                            }, new string[] { roleName }, TempPassword);
-                            
-                            //check if the creation of user is successful
-                            if (x.Item1 == false)
-                            {
-                                var errMsg = x.Item2[0].ToString();
-                                return BadRequest(new OpenIdConnectResponse
-                                {
-                                    Error = OpenIdConnectConstants.Errors.UnsupportedGrantType,
-                                    ErrorDescription = x.Item2[0].ToString()
-                                });
-                            }
-                            user = await _userManager.FindByEmailAsync(TempUser) ?? await _userManager.FindByNameAsync(TempUser);
-
-                        }
-                        else
-                        {
-                            return BadRequest(new OpenIdConnectResponse
-                            {
-                                Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                                ErrorDescription = "Please check that your email and password is correct"
-                            });
-                        }
-                    }
-                }
-                else //Auth Server user
-                {
-                    // Ensure the user is enabled.
-                    if (!user.IsEnabled)
-                    {
-                        return BadRequest(new OpenIdConnectResponse
-                        {
-                            Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                            ErrorDescription = "The specified user account is disabled"
-                        });
-                    }
-
-                    // Validate the username/password parameters and ensure the account is not locked out.
-                    var result = await _signInManager.CheckPasswordSignInAsync(user, TempPassword, true);
-
-                    // Ensure the user is not already locked out.
-                    if (result.IsLockedOut)
-                    {
-                        return BadRequest(new OpenIdConnectResponse
-                        {
-                            Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                            ErrorDescription = "The specified user account has been suspended"
-                        });
-                    }
-
-                    // Reject the token request if two-factor authentication has been enabled by the user.
-                    if (result.RequiresTwoFactor)
-                    {
-                        return BadRequest(new OpenIdConnectResponse
-                        {
-                            Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                            ErrorDescription = "Invalid login procedure"
-                        });
-                    }
-
-                    // Ensure the user is allowed to sign in.
-                    if (result.IsNotAllowed)
-                    {
-                        return BadRequest(new OpenIdConnectResponse
-                        {
-                            Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                            ErrorDescription = "The specified user is not allowed to sign in"
-                        });
-                    }
-
-                    if (!result.Succeeded)
-                    {
-                        return BadRequest(new OpenIdConnectResponse
-                        {
-                            Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                            ErrorDescription = "Please check that your email and password is correct"
-                        });
-                    }
-
-                }
-
-                // Create a new authentication ticket.
-                var ticket = await CreateTicketAsync(request, user);
-
-                return SignIn(ticket.Principal, ticket.Properties, ticket.AuthenticationScheme);
-            }//PasswordGrant
-            else if (request.IsRefreshTokenGrantType())
-            {
-                // Retrieve the claims principal stored in the refresh token.
-                var info = await HttpContext.AuthenticateAsync(OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-
-                // Retrieve the user profile corresponding to the refresh token.
-                // Note: if you want to automatically invalidate the refresh token
-                // when the user password/roles change, use the following line instead:
-                // var user = _signInManager.ValidateSecurityStampAsync(info.Principal);
-                var user = await _userManager.GetUserAsync(info.Principal);
-                if (user == null)
-                {
-                    return BadRequest(new OpenIdConnectResponse
-                    {
-                        Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                        ErrorDescription = "The refresh token is no longer valid"
+                        Errors = new List<string>() {
+                                "Username already in use"
+                            },
+                        Success = false
                     });
                 }
 
-                // Ensure the user is still allowed to sign in.
-                if (!await _signInManager.CanSignInAsync(user))
+                var newUser = new IdentityUser() { Email = user.Email, UserName = user.Username };
+
+                var isCreated = await _userManager.CreateAsync(newUser, user.Password);
+                
+                if (isCreated.Succeeded)
                 {
-                    return BadRequest(new OpenIdConnectResponse
+                    var jwtToken = GenerateJwtToken(newUser);
+
+                    return Ok(new TransactionResponse()
                     {
-                        Error = OpenIdConnectConstants.Errors.InvalidGrant,
-                        ErrorDescription = "The user is no longer allowed to sign in"
+                        Success = true,
+                        Token = jwtToken,
                     });
                 }
-
-                // Create a new authentication ticket, but reuse the properties stored
-                // in the refresh token, including the scopes originally granted.
-                var ticket = await CreateTicketAsync(request, user);
-
-                return SignIn(ticket.Principal, ticket.Properties, ticket.AuthenticationScheme);
+                else
+                {
+                    return BadRequest(new TransactionResponse()
+                    {
+                        Errors = isCreated.Errors.Select(x => x.Description).ToList(),
+                        Success = false
+                    });
+                }
             }
-            return BadRequest(new OpenIdConnectResponse
+
+            return BadRequest(new TransactionResponse()
             {
-                Error = OpenIdConnectConstants.Errors.UnsupportedGrantType,
-                ErrorDescription = "The specified grant type is not supported"
+                Errors = new List<string>() {
+                        "Invalid payload"
+                    },
+                Success = false
             });
-            //}
-            //catch (Exception e)
-            //{
-            //    _logger.LogError(e.StackTrace);
-            //    return BadRequest(new OpenIdConnectResponse
-            //    {
-            //        Error = OpenIdConnectConstants.Errors.UnsupportedGrantType,
-            //        ErrorDescription = "The specified grant type is not supported"
-            //    });
-            //}
         }
-        private async Task<AuthenticationTicket> CreateTicketAsync(OpenIdConnectRequest request, ApplicationUser user)
+
+        [HttpDelete]
+        [Route("DeleteUser")]
+        public async Task<IActionResult> Delete(string username)
         {
-            // Create a new ClaimsPrincipal containing the claims that
-            // will be used to create an id_token, a token or a code.
-            var principal = await _signInManager.CreateUserPrincipalAsync(user);
+            IdentityUser user = await _userManager.FindByNameAsync(username);
 
-            // Create a new authentication ticket holding the user identity.
-            var ticket = new AuthenticationTicket(principal, new AuthenticationProperties(),
-                //OpenIddictServerDefaults.AuthenticationScheme
-                OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
-
-
-            //if (!request.IsRefreshTokenGrantType())
-            //{
-            // Set the list of scopes granted to the client application.
-            // Note: the offline_access scope must be granted
-            // to allow OpenIddict to return a refresh token.
-            ticket.SetScopes(new[]
+            if (user != null)
             {
-                    OpenIdConnectConstants.Scopes.OpenId,
-                    OpenIdConnectConstants.Scopes.Email,
-                    OpenIdConnectConstants.Scopes.Phone,
-                    OpenIdConnectConstants.Scopes.Profile,
-                    OpenIdConnectConstants.Scopes.OfflineAccess,
-                    OpenIddictConstants.Scopes.Roles
-            }.Intersect(request.GetScopes()));
-
-            //ticket.SetResources("ECOMSS-api");
-
-            // Note: by default, claims are NOT automatically included in the access and identity tokens.
-            // To allow OpenIddict to serialize them, you must attach them a destination, that specifies
-            // whether they should be included in access tokens, in identity tokens or in both.
-
-            foreach (var claim in ticket.Principal.Claims)
-            {
-                // Never include the security stamp in the access and identity tokens, as it's a secret value.
-                if (claim.Type == _identityOptions.Value.ClaimsIdentity.SecurityStampClaimType)
-                    continue;
-
-
-                var destinations = new List<string> { OpenIdConnectConstants.Destinations.AccessToken };
-
-                // Only add the iterated claim to the id_token if the corresponding scope was granted to the client application.
-                // The other claims will only be added to the access_token, which is encrypted when using the default format.
-                if ((claim.Type == OpenIdConnectConstants.Claims.Subject && ticket.HasScope(OpenIdConnectConstants.Scopes.OpenId)) ||
-                    (claim.Type == OpenIdConnectConstants.Claims.Name && ticket.HasScope(OpenIdConnectConstants.Scopes.Profile)) ||
-                    (claim.Type == OpenIdConnectConstants.Claims.Role && ticket.HasScope(OpenIddictConstants.Claims.Role)) ||
-                    (claim.Type == CustomClaimTypes.Permission && ticket.HasScope(OpenIddictConstants.Claims.Role)))
+                IdentityResult result = await _userManager.DeleteAsync(user);
+                
+                if (result.Succeeded)
+                    return Ok("User has been deleted");
+                else
+                    return BadRequest(new TransactionResponse()
+                    {
+                        Errors = new List<string>() {
+                                "Failed: User deletion"
+                            },
+                        Success = false
+                    });
+            }
+            else
+                return BadRequest(new TransactionResponse()
                 {
-                    destinations.Add(OpenIdConnectConstants.Destinations.IdentityToken);
+                    Errors = new List<string>() {
+                                "User Not Found"
+                            },
+                    Success = false
+                });
+        }
+
+
+        [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login([FromQuery] string username, string password)
+        {
+            if (ModelState.IsValid)
+            {
+                var existingUser = await _userManager.FindByNameAsync(username);
+
+                if (existingUser == null)
+                {
+                    return BadRequest(new TransactionResponse()
+                    {
+                        Errors = new List<string>() {
+                                "Invalid login request"
+                            },
+                        Success = false
+                    });
                 }
 
-                AspNet.Security.OpenIdConnect.Extensions.OpenIdConnectExtensions.SetDestinations(claim, destinations);
-                //OpenIddict.Abstractions.OpenIddictExtensions.SetDestinations(claim,destinations);
-                //claim.SetDestinations(destinations);
+                var isCorrect = await _userManager.CheckPasswordAsync(existingUser, password);
+
+                if (!isCorrect)
+                {
+                    return BadRequest(new TransactionResponse()
+                    {
+                        Errors = new List<string>() {
+                                "Invalid login request"
+                            },
+                        Success = false
+                    });
+                }
+
+                var jwtToken = GenerateJwtToken(existingUser);
+
+                return Ok(new TransactionResponse()
+                {
+                    Success = true,
+                    Token = jwtToken
+                });
             }
 
-
-            var identity = principal.Identity as ClaimsIdentity;
-
-
-            if (ticket.HasScope(OpenIdConnectConstants.Scopes.Profile))
+            return BadRequest(new TransactionResponse()
             {
-                if (!string.IsNullOrWhiteSpace(user.JobTitle))
-                    AspNet.Security.OpenIdConnect.Extensions.OpenIdConnectExtensions.AddClaim(identity, CustomClaimTypes.JobTitle, user.JobTitle, OpenIdConnectConstants.Destinations.IdentityToken);
-                //identity.AddClaim(CustomClaimTypes.JobTitle, user.JobTitle, OpenIdConnectConstants.Destinations.IdentityToken);
+                Errors = new List<string>() {
+                        "Invalid payload"
+                    },
+                Success = false
+            });
+        }
 
-                if (!string.IsNullOrWhiteSpace(user.FullName))
-                    AspNet.Security.OpenIdConnect.Extensions.OpenIdConnectExtensions.AddClaim(identity, CustomClaimTypes.FullName, user.FullName, OpenIdConnectConstants.Destinations.IdentityToken);
-                //identity.AddClaim(CustomClaimTypes.FullName, user.FullName, OpenIdConnectConstants.Destinations.IdentityToken);
-
-                if (!string.IsNullOrWhiteSpace(user.Configuration))
-                    AspNet.Security.OpenIdConnect.Extensions.OpenIdConnectExtensions.AddClaim(identity, CustomClaimTypes.Configuration, user.Configuration, OpenIdConnectConstants.Destinations.IdentityToken);
-                //identity.AddClaim(CustomClaimTypes.Configuration, user.Configuration, OpenIdConnectConstants.Destinations.IdentityToken);
-
-
-
-            }
-
-            if (ticket.HasScope(OpenIdConnectConstants.Scopes.Email))
+        [HttpPost]
+        [Route("RefreshToken")]
+        public async Task<IActionResult> RefreshToken([FromBody] TokenRequest tokenRequest)
+        {
+            if (ModelState.IsValid)
             {
-                if (!string.IsNullOrWhiteSpace(user.Email))
-                    AspNet.Security.OpenIdConnect.Extensions.OpenIdConnectExtensions.AddClaim(identity, CustomClaimTypes.Email, user.Email, OpenIdConnectConstants.Destinations.IdentityToken);
-                //identity.AddClaim(CustomClaimTypes.Email, user.Email, OpenIdConnectConstants.Destinations.IdentityToken);
+                var result = await VerifyAndGenerateToken(tokenRequest);
+
+                if (result == null)
+                {
+                    return BadRequest(new TransactionResponse()
+                    {
+                        Errors = new List<string>() {
+                            "Invalid tokens"
+                        },
+                        Success = false
+                    });
+                }
+
+                return Ok(result);
             }
 
-            if (ticket.HasScope(OpenIdConnectConstants.Scopes.Phone))
+            return BadRequest(new TransactionResponse()
             {
-                if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
-                    AspNet.Security.OpenIdConnect.Extensions.OpenIdConnectExtensions.AddClaim(identity, CustomClaimTypes.Phone, user.PhoneNumber, OpenIdConnectConstants.Destinations.IdentityToken);
-                //identity.AddClaim(CustomClaimTypes.Phone, user.PhoneNumber, OpenIdConnectConstants.Destinations.IdentityToken);
+                Errors = new List<string>() {
+                    "Invalid payload"
+                },
+                Success = false
+            });
+        }
+
+
+
+        private string GenerateJwtToken(IdentityUser user)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+
+            var key = Encoding.ASCII.GetBytes(_jwtConfig.Secret);
+
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new[]
+                {
+                    new Claim("Id", user.Id),
+                    new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                    new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                }),
+                Expires = DateTime.UtcNow.AddHours(6),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+            };
+
+            var token = jwtTokenHandler.CreateToken(tokenDescriptor);
+            var jwtToken = jwtTokenHandler.WriteToken(token);
+
+            return jwtToken;
+        }
+
+        // Get all valid claims for the corresponding user
+        private async Task<List<Claim>> GetAllValidClaims(IdentityUser user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim("Id", user.Id),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Sub, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            // Getting the claims that we have assigned to the user
+            var userClaims = await _userManager.GetClaimsAsync(user);
+            claims.AddRange(userClaims);
+
+            // Get the user role and add it to the claims
+            var userRoles = await _userManager.GetRolesAsync(user);
+
+            foreach (var userRole in userRoles)
+            {
+                var role = await _roleManager.FindByNameAsync(userRole);
+
+                if (role != null)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, userRole));
+
+                    var roleClaims = await _roleManager.GetClaimsAsync(role);
+                    foreach (var roleClaim in roleClaims)
+                    {
+                        claims.Add(roleClaim);
+                    }
+                }
             }
 
+            return claims;
+        }
 
-            //ticket.SetAccessTokenLifetime(TimeSpan.FromHours(25));
-            //ticket.SetIdentityTokenLifetime(TimeSpan.FromHours(25));
-            ticket.SetAccessTokenLifetime(TimeSpan.FromDays(25));
-            ticket.SetIdentityTokenLifetime(TimeSpan.FromDays(25));
+        private async Task<AuthResult> VerifyAndGenerateToken(TokenRequest tokenRequest)
+        {
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
 
-            return ticket;
+            try
+            {
+                // Validation 1 - Validation JWT token format
+                var tokenInVerification = jwtTokenHandler.ValidateToken(tokenRequest.Token, _tokenValidationParams, out var validatedToken);
+
+                // Validation 2 - Validate encryption alg
+                if (validatedToken is JwtSecurityToken jwtSecurityToken)
+                {
+                    var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
+
+                    if (result == false)
+                    {
+                        return null;
+                    }
+                }
+
+                // Validation 3 - validate expiry date
+                var utcExpiryDate = long.Parse(tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
+
+                var expiryDate = UnixTimeStampToDateTime(utcExpiryDate);
+
+                if (expiryDate > DateTime.UtcNow)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has not yet expired"
+                        }
+                    };
+                }
+
+                // validation 4 - validate existence of the token
+                var storedToken = await _apiDbContext.RefreshTokens.FirstOrDefaultAsync(x => x.Token == tokenRequest.RefreshToken);
+
+                if (storedToken == null)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token does not exist"
+                        }
+                    };
+                }
+
+                // Validation 5 - validate if used
+                if (storedToken.IsUsed)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has been used"
+                        }
+                    };
+                }
+
+                // Validation 6 - validate if revoked
+                if (storedToken.IsRevorked)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has been revoked"
+                        }
+                    };
+                }
+
+                // Validation 7 - validate the id
+                var jti = tokenInVerification.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
+
+                if (storedToken.JwtId != jti)
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token doesn't match"
+                        }
+                    };
+                }
+
+                // update current token 
+
+                storedToken.IsUsed = true;
+                _apiDbContext.RefreshTokens.Update(storedToken);
+                await _apiDbContext.SaveChangesAsync();
+
+                // Generate a new token
+                var dbUser = await _userManager.FindByIdAsync(storedToken.UserId);
+
+                if (dbUser == null)
+                    throw new NullReferenceException("No user found");
+
+                return new AuthResult { Token = GenerateJwtToken(dbUser), Success = true }; 
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("Lifetime validation failed. The token is expired."))
+                {
+
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Token has expired please re-login"
+                        }
+                    };
+
+                }
+                else
+                {
+                    return new AuthResult()
+                    {
+                        Success = false,
+                        Errors = new List<string>() {
+                            "Something went wrong."
+                        }
+                    };
+                }
+            }
+        }
+
+        private DateTime UnixTimeStampToDateTime(long unixTimeStamp)
+        {
+            var dateTimeVal = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+            dateTimeVal = dateTimeVal.AddSeconds(unixTimeStamp).ToUniversalTime();
+
+            return dateTimeVal;
+        }
+
+        private string RandomString(int length)
+        {
+            var random = new Random();
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+                .Select(x => x[random.Next(x.Length)]).ToArray());
         }
     }
 }
