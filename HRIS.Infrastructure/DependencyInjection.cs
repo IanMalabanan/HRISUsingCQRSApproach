@@ -58,8 +58,6 @@ namespace HRIS.Infrastructure
             services.AddScoped<IDateTime, DateTimeService>();
             //services.AddTransient<IKeyGenerator, MongoKeyGenerator>();
 
-            //services.AddSingleton<IIdentityService, IdentityService>();
-
             var _messagingConfig = configuration.GetSection(nameof(MessagingClientConfig)).Get<MessagingClientConfig>();
             services.AddSingleton(c => new MessagingClientConfigBuilder(_messagingConfig));
             services.AddScoped<IMessagingService, MessagingService>();

@@ -19,9 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="AuditTrailCQRS\Queries\" />
-    <Folder Include="DepartmentSectionCQRS\Commands\" />
-    <Folder Include="DepartmentSectionCQRS\Queries\" />
+    <Folder Include="AuditTrailFunctions\Queries\" />
+    <Folder Include="DepartmentSectionFunctions\Commands\" />
+    <Folder Include="DepartmentSectionFunctions\Queries\" />
+    <Folder Include="UserFunctions\Commands\" />
+    <Folder Include="UserFunctions\Queries\" />
   </ItemGroup>
 
 </Project>

@@ -29,4 +29,10 @@
     <ProjectReference Include="..\HRIS.Domain\HRIS.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="GlobalBusinessComponents">
+      <HintPath>..\HRIS.API\bin\Debug\net5.0\GlobalBusinessComponents.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

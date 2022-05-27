@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using OpenIddict;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,8 @@ using HRIS.Application;
 using HRIS.Infrastructure.Repositories;
 using HRIS.Application.Common.Interfaces.Application;
 using HRIS.API.Services;
+using Microsoft.AspNetCore.Authorization;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace HRIS.API
 {
@@ -37,7 +40,15 @@ namespace HRIS.API
             services.AddDbContext<ApplicationDBContext>(options =>
             {
                 options.UseSqlServer(
-                    Configuration["ConnectionStrings:DefaultConnection"], b => b.MigrationsAssembly("HRIS.Infrastructure"));
+                    Configuration["ConnectionStrings:DefaultConnection"]
+                    , b => b.MigrationsAssembly("HRIS.Infrastructure"));
+            });
+
+            services.AddDbContext<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(Configuration["ConnectionStrings:HRISAPIContextConnection"]
+                    , b => b.MigrationsAssembly("HRIS.API"));
+                //options.UseOpenIddict();
             });
 
             services.AddApplication();
@@ -53,7 +64,34 @@ namespace HRIS.API
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRIS.API", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "HRIS UAT Env", Version = "v1", Description = "Rest APIs for HRIS Sample Project" });
+                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.OAuth2,
+                    Flows = new OpenApiOAuthFlows
+                    {
+                        Password = new OpenApiOAuthFlow
+                        {
+                            TokenUrl = new Uri("http://localhost:8722/connect/token")
+                        }
+                    },
+                    Description = "Note: Leave client_id and client_secret blank",
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                          new OpenApiSecurityScheme
+                            {
+                                Reference = new OpenApiReference
+                                {
+                                    Type = ReferenceType.SecurityScheme,
+                                    Id = "oauth2"
+                                }
+                            },
+                            new string[] {}
+                    }
+                });
+                c.OperationFilter<AuthorizeCheckOperationFilter>();
             });
         }
 
@@ -71,12 +109,41 @@ namespace HRIS.API
 
             app.UseRouting();
 
+            app.UseAuthentication();
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
+        }
+    }
+
+    public class AuthorizeCheckOperationFilter : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            //// Check for authorize attribute
+            var hasAuthorize = context.MethodInfo.DeclaringType.GetCustomAttributes(true)
+                .Union(context.MethodInfo.GetCustomAttributes(true))
+                .OfType<AuthorizeAttribute>()
+                .Any();
+
+            if (hasAuthorize)
+            {
+                operation.Responses.Add("401", new OpenApiResponse { Description = "Unauthorized" });
+                operation.Responses.Add("403", new OpenApiResponse { Description = "Forbidden" });
+
+                operation.Security = new List<OpenApiSecurityRequirement>
+                {
+                    new OpenApiSecurityRequirement
+                    {
+                        [new OpenApiSecurityScheme {Reference = new OpenApiReference {Type = ReferenceType.SecurityScheme, Id = "oauth2"}}]
+                            = new string [] { }
+                    }
+                };
+            }
         }
     }
 }

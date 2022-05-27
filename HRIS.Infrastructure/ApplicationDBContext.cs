@@ -44,6 +44,8 @@ namespace HRIS.Infrastructure
 
         public DbSet<AuditTrailLog> AuditTrails { get; set; }
 
+        public DbSet<User> Users { get; set; }
+
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {

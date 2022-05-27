@@ -1,5 +1,5 @@
 ﻿using HRIS.Application.Common.Exceptions;
-using HRIS.Application.EmployeesCQRS.Commands;
+using HRIS.Application.EmployeesFunctions.Commands;
 using HRIS.Application.Employees.Queries;
 using HRIS.Domain.Entities;
 using HRIS.Domain.Exceptions;
