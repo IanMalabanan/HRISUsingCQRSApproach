@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 using System.Net.Http.Json;
 using System.Net.Http;
 
-namespace HRIS.Web.Services
+namespace HRIS.Blazor.Services
 {
     public class AuthService : IAuthService
     {
@@ -58,20 +58,18 @@ namespace HRIS.Web.Services
             {
                 loginResult = JsonConvert.DeserializeObject<LoginResult>(await response.Content.ReadAsStringAsync());
 
-                return loginResult;
-            }
+                var user = await GetUserDetails(loginRequest.Username);
 
-            var user = await GetUserDetails(loginRequest.Username);
+                if (user.ContainsKey("email"))
+                {
+                    await _localStorage.SetItemAsync("authToken", loginResult.Token);
 
-            if (user.ContainsKey("Email"))
-            {
-                await _localStorage.SetItemAsync("authToken", loginResult.Token);
+                    ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated(user["email"].ToString());
 
-                ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated(user["Email"].ToString());
+                    _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", loginResult.Token);
 
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", loginResult.Token);
-
-                return loginResult;
+                    return loginResult;
+                }
             }
 
             throw new Exception("Invalid Login");
@@ -84,12 +82,21 @@ namespace HRIS.Web.Services
                 Path = "api/Authorization/GetUserByUsername",
                 Query = "username=" + username
             };
-
-            var responseMessage = await _httpClient.GetFromJsonAsync<Dictionary<string, string>>(usrUrl.ToString());
-
-            if (responseMessage.ContainsKey("Email"))
+            
+            // Add an Accept header for JSON format.
+            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            
+            HttpResponseMessage response = await _httpClient.GetAsync(usrUrl.ToString()).ConfigureAwait(false);  
+            if (response.IsSuccessStatusCode)
             {
-                return responseMessage;
+                var products = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+
+                var result = JsonConvert.DeserializeObject<Dictionary<string, string>>(products);
+
+                if (result.ContainsKey("email"))
+                {
+                    return result;
+                }
             }
 
             throw new Exception("No User Found");

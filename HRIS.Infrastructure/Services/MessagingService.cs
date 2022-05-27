@@ -97,6 +97,7 @@ namespace HRIS.Infrastructure.Services
                 _email.Body = emailBody;
 
                 var _url = _config.BaseUrl + _sendEmailURL;
+
                 var _results = await base.PostAsync<InfobipEmailMessageModel, EmailResponseModel>(_url, _email);
 
                 return _results;

@@ -125,8 +125,6 @@ namespace HRIS.API
                     c.SwaggerEndpoint("/swagger/AUTH/swagger.json", "AUTH");
                     c.SwaggerEndpoint("/swagger/HRIS/swagger.json", "HRIS");
                 });
-
-                //c.SwaggerEndpoint("/swagger/v1/swagger.json", "HRIS.API v1"));
             }
 
             app.UseHttpsRedirection();

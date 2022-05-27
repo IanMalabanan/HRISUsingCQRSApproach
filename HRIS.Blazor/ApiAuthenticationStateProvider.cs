@@ -9,7 +9,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace HRIS.Web
+namespace HRIS.Blazor
 {
     public class ApiAuthenticationStateProvider : AuthenticationStateProvider
     {

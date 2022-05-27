@@ -1,7 +1,7 @@
 ﻿using HRIS.Domain.ViewModels;
 using System.Threading.Tasks;
 
-namespace HRIS.Web.Services
+namespace HRIS.Blazor.Services
 {
     public interface IAuthService
     {
