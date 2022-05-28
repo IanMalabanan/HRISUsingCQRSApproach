@@ -1,5 +1,4 @@
 using Blazored.LocalStorage;
-using HRIS.Blazor.Data;
 using HRIS.Blazor.Model;
 using HRIS.Blazor.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -47,7 +46,6 @@ namespace HRIS.Blazor
             services.AddScoped<TokenProvider>();
             services.AddRazorPages();
             services.AddServerSideBlazor();
-            services.AddSingleton<WeatherForecastService>();
 
             services.AddHttpClient();
 

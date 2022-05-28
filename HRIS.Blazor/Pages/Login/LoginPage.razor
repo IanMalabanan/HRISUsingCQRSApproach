@@ -1,11 +1,11 @@
 ﻿@page "/"
-
+@layout LoginLayout
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject ILocalStorageService _localStorage
 
-<h1>Login</h1>
+<title>Login</title>
 
 @if (ShowErrors)
 {
@@ -13,15 +13,18 @@
     <p>@Error</p>
 </div>}
 
-<div class="card">
+<br />
+<br />
+
+<div class="card" style="margin-left:30%; margin-right:30%">
     <div class="card-body">
-        <h5 class="card-title">Please enter your details</h5>
+        <h5 class="card-title" style="text-align:center">Login Form</h5>
         <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
             <div class="form-group">
-                <label for="email">Email address</label>
+                <label for="username">Username</label>
                 <InputText Id="username" Class="form-control" @bind-Value="loginModel.Username" />
                 <ValidationMessage For="@(() => loginModel.Username)" />
             </div>
@@ -30,7 +33,7 @@
                 <InputText Id="password" type="password" Class="form-control" @bind-Value="loginModel.Password" />
                 <ValidationMessage For="@(() => loginModel.Password)" />
             </div>
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" class="btn btn-primary" style="float:right">SIGN IN</button>
         </EditForm>
     </div>
 </div>

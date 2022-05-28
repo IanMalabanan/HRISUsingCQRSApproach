@@ -26,6 +26,7 @@ namespace HRIS.Blazor.Services
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor httpContextAccessor;
 
+
         public AuthService(HttpClient httpClient,
                            AuthenticationStateProvider authenticationStateProvider,
                            ILocalStorageService localStorage
@@ -41,16 +42,9 @@ namespace HRIS.Blazor.Services
             tokenProvider = _tokenProvider;
         }
 
-        //public async Task<RegisterResult> Register(RegisterModel registerModel)
-        //{
-        //    var result = await _httpClient.PostJsonAsync<RegisterResult>("api/accounts", registerModel);
-
-        //    return result;
-        //}
-
         public async Task<LoginResult> Login(LoginRequest loginRequest)
         {
-            UriBuilder url = new UriBuilder("http://localhost:8722/")
+            UriBuilder url = new UriBuilder(_config.GetValue<string>("HRISBaseUrl"))
             {
                 Path = "api/Authorization/Login",
                 Query = "username=" + loginRequest.Username + "&password=" + loginRequest.Password
@@ -85,7 +79,7 @@ namespace HRIS.Blazor.Services
 
         public async Task<Dictionary<string, string>> GetUserDetails(string username)
         {
-            UriBuilder usrUrl = new UriBuilder("http://localhost:8722/")
+            UriBuilder usrUrl = new UriBuilder(_config.GetValue<string>("HRISBaseUrl"))
             {
                 Path = "api/Authorization/GetUserByUsername",
                 Query = "username=" + username

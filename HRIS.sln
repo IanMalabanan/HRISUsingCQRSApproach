@@ -19,7 +19,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Presentation", "Presentatio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HRIS.WPF", "HRIS.WPF\HRIS.WPF.csproj", "{C30CB5D5-54E9-4E35-B5F9-E66FD665BD2E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HRIS.Blazor", "HRIS.Blazor\HRIS.Blazor.csproj", "{CE66C6ED-1AC6-4CBF-9AA9-F123FD2BE83F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HRIS.Blazor", "HRIS.Blazor\HRIS.Blazor.csproj", "{CE66C6ED-1AC6-4CBF-9AA9-F123FD2BE83F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

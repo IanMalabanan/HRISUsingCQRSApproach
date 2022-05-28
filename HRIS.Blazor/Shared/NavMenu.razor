@@ -1,5 +1,5 @@
 ﻿<div class="top-row pl-4 navbar navbar-dark">
-    <a class="navbar-brand" href="">HRIS.Blazor</a>
+    <a class="navbar-brand" href="">HRIS Web Application</a>
     <button class="navbar-toggler" @onclick="ToggleNavMenu">
         <span class="navbar-toggler-icon"></span>
     </button>
@@ -9,6 +9,11 @@
     <ul class="nav flex-column">
         <AuthorizeView>
             <Authorized>
+                <li class="nav-item px-3">
+                    <NavLink class="nav-link" href="/main">
+                        <span class="oi oi-home" aria-hidden="true"></span> Home
+                    </NavLink>
+                </li>
                 <li class="nav-item px-3">
                     <NavLink class="nav-link" href="/logout">
                         <span class="oi oi-account-logout" aria-hidden="true"></span> Logout
@@ -24,11 +29,7 @@
             </NotAuthorized>
         </AuthorizeView>
        
-        @*<li class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </li>
+        @*
         <li class="nav-item px-3">
             <NavLink class="nav-link" href="counter">
                 <span class="oi oi-plus" aria-hidden="true"></span> Counter
