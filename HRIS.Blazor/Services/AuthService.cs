@@ -12,26 +12,33 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Net.Http.Json;
 using System.Net.Http;
+using Microsoft.AspNetCore.Http;
+using HRIS.Blazor.Model;
 
 namespace HRIS.Blazor.Services
 {
     public class AuthService : IAuthService
     {
+        private readonly TokenProvider tokenProvider;
         private readonly HttpClient _httpClient;
         private readonly AuthenticationStateProvider _authenticationStateProvider;
         private readonly ILocalStorageService _localStorage;
         private readonly IConfiguration _config;
-
+        private readonly IHttpContextAccessor httpContextAccessor;
 
         public AuthService(HttpClient httpClient,
                            AuthenticationStateProvider authenticationStateProvider,
                            ILocalStorageService localStorage
-                           , IConfiguration configuration)
+                           , IConfiguration configuration,
+                           IHttpContextAccessor HttpContextAccessor,
+                           TokenProvider _tokenProvider)
         {
             _httpClient = httpClient;
             _authenticationStateProvider = authenticationStateProvider;
             _localStorage = localStorage;
             _config = configuration;
+            httpContextAccessor = HttpContextAccessor;
+            tokenProvider = _tokenProvider;
         }
 
         //public async Task<RegisterResult> Register(RegisterModel registerModel)
@@ -51,18 +58,19 @@ namespace HRIS.Blazor.Services
 
             var response = await _httpClient.PostAsJsonAsync<LoginResult>(url.ToString(), null);
 
-
             LoginResult loginResult = new LoginResult();
 
             if (response.IsSuccessStatusCode)
             {
                 loginResult = JsonConvert.DeserializeObject<LoginResult>(await response.Content.ReadAsStringAsync());
 
+                tokenProvider.AccessToken = loginResult.Token;
+
                 var user = await GetUserDetails(loginRequest.Username);
 
                 if (user.ContainsKey("email"))
                 {
-                    await _localStorage.SetItemAsync("authToken", loginResult.Token);
+                    //await _localStorage.SetItemAsync("authToken", tokenProvider.AccessToken);//loginResult.Token);
 
                     ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsAuthenticated(user["email"].ToString());
 
@@ -104,7 +112,9 @@ namespace HRIS.Blazor.Services
 
         public async Task Logout()
         {
-            await _localStorage.RemoveItemAsync("authToken");
+            await _localStorage.ClearAsync();
+            //await _localStorage.RemoveItemAsync("authToken");
+            tokenProvider.AccessToken = string.Empty;
             ((ApiAuthenticationStateProvider)_authenticationStateProvider).MarkUserAsLoggedOut();
             _httpClient.DefaultRequestHeaders.Authorization = null;
         }

@@ -1,7 +1,9 @@
-﻿@page "/login"
+﻿@page "/"
 
 @inject IAuthService AuthService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject ILocalStorageService _localStorage
 
 <h1>Login</h1>
 
@@ -33,24 +35,27 @@
     </div>
 </div>
 
-@code { private LoginRequest loginModel = new LoginRequest();
-            private bool ShowErrors;
-            private string Error = "";
+@code { 
+   
 
-            private async Task HandleLogin()
-            {
-                ShowErrors = false;
+    private LoginRequest loginModel = new LoginRequest();
+    private bool ShowErrors;
+    private string Error = "";
 
-                var result = await AuthService.Login(loginModel);
+    private async Task HandleLogin()
+    {
+        ShowErrors = false;
 
-                if (result.Success)
-                {
-                    NavigationManager.NavigateTo("/");
-                }
-                else
-                {
-                    Error = result.Error;
-                    ShowErrors = true;
-                }
-            } }
+        var result = await AuthService.Login(loginModel);
+
+        if (result.Success)
+        {
+            NavigationManager.NavigateTo("/main");
+        }
+        else
+        {
+            Error = result.Error;
+            ShowErrors = true;
+        }
+    } }
 

@@ -1,5 +1,9 @@
 ﻿using Blazored.LocalStorage;
+using HRIS.Blazor.Model;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,24 +19,39 @@ namespace HRIS.Blazor
     {
         private readonly HttpClient _httpClient;
         private readonly ILocalStorageService _localStorage;
+        private readonly IJSRuntime JSRuntime;
+        private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly TokenProvider tokenProvider;
 
-        public ApiAuthenticationStateProvider(HttpClient httpClient, ILocalStorageService localStorage)
+        
+
+        public ApiAuthenticationStateProvider(HttpClient httpClient
+            , ILocalStorageService localStorage, IJSRuntime jSRuntime
+            ,TokenProvider _tokenProvider
+            , IHttpContextAccessor HttpContextAccessor
+            )
         {
             _httpClient = httpClient;
             _localStorage = localStorage;
+            JSRuntime = jSRuntime;
+            tokenProvider = _tokenProvider;
+            httpContextAccessor = HttpContextAccessor;
         }
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var savedToken = await _localStorage.GetItemAsync<string>("authToken");
+            var savedToken = await Task.FromResult(tokenProvider.AccessToken);
 
-            if (string.IsNullOrWhiteSpace(savedToken))
+            if (!string.IsNullOrEmpty(savedToken))
             {
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
+
+                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(savedToken), "jwt")));
+            }
+            else
+            {
+                await _localStorage.ClearAsync();
                 return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
             }
-
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
-
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(ParseClaimsFromJwt(savedToken), "jwt")));
         }
 
         public void MarkUserAsAuthenticated(string email)
