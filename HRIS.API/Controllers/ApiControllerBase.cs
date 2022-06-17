@@ -22,7 +22,6 @@ namespace HRIS.API.Controllers
         protected IMapper Mapper => _mapper ??= HttpContext.RequestServices.GetService<IMapper>();
         protected IConfiguration Configuration => _configuration ??= HttpContext.RequestServices.GetService<IConfiguration>();
         protected ILogger Logger => _logger ??= HttpContext.RequestServices.GetService<ILogger>();
-        //protected IEmailBodyBuilder EmailBodyBuilder => _emailBodyBuilder ??= HttpContext.RequestServices.GetService<IEmailBodyBuilder>();
 
         public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
         {

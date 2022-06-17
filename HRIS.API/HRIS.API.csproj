@@ -38,13 +38,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="GlobalBusinessComponents">
-      <HintPath>bin\Debug\net5.0\GlobalBusinessComponents.dll</HintPath>
-    </Reference>
+    <Folder Include="Core\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Core\" />
+    <Reference Include="GlobalBusinessComponents">
+      <HintPath>bin\Debug\net5.0\GlobalBusinessComponents.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
